@@ -1,0 +1,62 @@
+﻿@page
+@model Chat.Presentation.Pages.ChatModel
+
+@{
+    ViewData["Title"] = "Czat";
+}
+
+<div style="display: flex; height: 90vh;">
+    <!-- użytkownicy -->
+    <div style="width: 25%; border-right: 1px solid #ccc; padding: 10px; overflow-y: auto;">
+        <h5><strong>Użytkownicy</strong></h5>
+        @foreach (var user in Model.Users.Where(u => u.Id != Model.CurrentUserId))
+        {
+            bool isSelected = user.Id == Model.SelectedUserId;
+            <form method="get" style="margin-bottom: 5px;">
+                <input type="hidden" name="userId" value="@user.Id" />
+                <button type="submit"
+                        class="btn btn-link"
+                        style="text-decoration: none; width: 100%; text-align: left; padding: 5px; border-radius: 4px;
+                               background-color:@(isSelected ? "#e0e0e0" : "transparent");">
+                    <strong class="@(isSelected ? "fw-bold text-primary" : "")">@user.Username</strong>
+                </button>
+            </form>
+        }
+    </div>
+
+    <!-- wiadomości + input -->
+    <div style="width: 75%; padding: 10px; display: flex; flex-direction: column;">
+        <div id="messages-container" style="flex: 1; overflow-y: auto; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+            <partial name="_MessageList" model="Model.Messages" />
+        </div>
+
+        @if (Model.SelectedUserId != Guid.Empty)
+        {
+            <form method="post" style="margin-top: 10px;" autocomplete="off">
+                <div class="input-group">
+                    <input type="text" name="content" class="form-control" placeholder="Wpisz wiadomość..." />
+                    <input type="hidden" name="receiverId" value="@Model.SelectedUserId" />
+                    <button type="submit" class="btn btn-primary">Wyślij</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function fetchMessages() {
+            const userId = '@Model.SelectedUserId';
+
+            if (!userId || userId === '00000000-0000-0000-0000-000000000000') return;
+
+            fetch(`/ChatMessages?userId=${userId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("messages-container").innerHTML = html;
+                });
+        }
+
+        setInterval(fetchMessages, 2000);
+    </script>
+}

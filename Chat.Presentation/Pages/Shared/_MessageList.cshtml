@@ -1,0 +1,25 @@
+﻿@model List<Chat.Application.DTOs.MessageResponse>
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var currentUserId = HttpContextAccessor.HttpContext.Session.GetString("userId");
+    var users = ViewData["Users"] as List<Chat.Application.DTOs.UserResponse> ?? new();
+}
+
+@if (Model.Any())
+{
+    foreach (var message in Model)
+    {
+        bool isSender = message.SenderId.ToString() == currentUserId;
+
+        <div class="mb-2 text-white p-2 rounded" style="background-color:@(isSender ? "#80d6ff" : "#198754"); max-width: 70%;">
+            <div>@message.Content</div>
+            <small class="text-light">@message.SentAt.ToString("g")</small>
+        </div>
+    }
+}
+else
+{
+    <p class="text-muted">Brak wiadomości.</p>
+}

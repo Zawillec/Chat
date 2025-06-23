@@ -1,0 +1,23 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Strona główna";
+}
+
+<div class="text-center mt-5">
+    @if (Model.Registered)
+    {
+        <div class="alert alert-success" role="alert">
+            Użytkownik został pomyślnie zarejestrowany. Możesz się teraz zalogować.
+        </div>
+    }
+    @if (Model.LoggedOut)
+    {
+        <div class="alert alert-info" role="alert">
+            Pomyślnie wylogowano.
+        </div>
+    }
+
+    <h1 class="display-4">Witaj w czacie!</h1>
+    <p class="lead">Zaloguj się lub zarejestruj, aby rozpocząć rozmowę.</p>
+</div>

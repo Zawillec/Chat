@@ -1,0 +1,63 @@
+﻿@{
+    var username = Context.Session.GetString("username");
+    var role = Context.Session.GetString("role");
+    var currentPath = Context.Request.Path.Value?.ToLower();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Chat.Presentation</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Chat.Presentation.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container d-flex justify-content-end">
+                @if (!string.IsNullOrEmpty(username))
+                {
+                    if (role == "Admin")
+                    {
+                        if (currentPath != null && currentPath.Contains("/manage"))
+                        {
+                            <a class="btn btn-outline-secondary me-2" asp-page="/Chat">Czat</a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-warning me-2" asp-page="/Manage">Zarządzaj</a>
+                        }
+                    }
+
+                    <a class="btn btn-outline-danger" asp-page="/Logout">Wyloguj</a>
+                }
+                else
+                {
+                    <a class="btn btn-outline-primary me-2" asp-page="/Login">Zaloguj się</a>
+                    <a class="btn btn-outline-success" asp-page="/Register">Zarejestruj się</a>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
