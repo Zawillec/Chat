@@ -1,79 +1,78 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Chat.Application.DTOs;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text;
+using Chat.Application.DTOs;
+using Microsoft.Extensions.Logging;
 
-[AllowAnonymous]
-public class LoginModel : PageModel
+namespace Chat.Presentation.Pages
 {
-    [BindProperty]
-    public LoginInput Input { get; set; } = new();
-
-    [TempData]
-    public string ErrorMessage { get; set; }
-
-    public void OnGet() { }
-
-    public async Task<IActionResult> OnPostAsync()
+    [AllowAnonymous]
+    public class LoginModel : PageModel
     {
-        if (!ModelState.IsValid)
-            return Page();
+        private readonly ILogger<LoginModel> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        var httpClient = new HttpClient();
-        var payload = new
+        public LoginModel(ILogger<LoginModel> logger, IHttpClientFactory httpClientFactory)
         {
-            username = Input.Username,
-            password = Input.Password
-        };
-
-        var response = await httpClient.PostAsJsonAsync("http://localhost:5000/api/auth/login", payload);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (content.Contains("Account is deactivated"))
-            {
-                ErrorMessage = "Konto zosta³o zablokowane, skontaktuj siê z administratorem.";
-            }
-            else
-            {
-                ErrorMessage = "Nieprawid³owa nazwa u¿ytkownika lub has³o.";
-            }
-
-            return Page();
+            _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
-        var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        [BindProperty]
+        public LoginInput Input { get; set; } = new();
 
-        HttpContext.Session.SetString("userId", authResponse.Id);
-        HttpContext.Session.SetString("token", authResponse.Token);
-        HttpContext.Session.SetString("username", authResponse.Username);
-        HttpContext.Session.SetString("role", authResponse.Role);
+        [TempData]
+        public string ErrorMessage { get; set; }
 
-        return RedirectToPage("/Chat");
-    }
+        public void OnGet() { }
 
-    [AllowAnonymous]
-    public class LoginInput
-    {
-        [Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
-        public string Username { get; set; }
+        public async Task<IActionResult> OnPostAsync()
+        {
+            if (!ModelState.IsValid)
+                return Page();
 
-        [Required(ErrorMessage = "Has³o jest wymagane")]
-        public string Password { get; set; }
-    }
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("X-Request-Source", "Strona");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", Request.Headers["User-Agent"].ToString());
 
-    [AllowAnonymous]
-    public class AuthResponse
-    {
-        public string Id { get; set; }
-        public string Token { get; set; }
-        public string Username { get; set; }
-        public string Role { get; set; }
+            var payload = new
+            {
+                username = Input.Username,
+                password = Input.Password
+            };
+
+            var response = await httpClient.PostAsJsonAsync("http://localhost:5000/api/auth/login", payload);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (content.Contains("Account is deactivated"))
+                    ErrorMessage = "Konto zosta³o zablokowane, skontaktuj siê z administratorem.";
+                else
+                    ErrorMessage = "Nieprawid³owa nazwa u¿ytkownika lub has³o.";
+                return Page();
+            }
+
+            var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+            HttpContext.Session.SetString("userId", authResponse.Id);
+            HttpContext.Session.SetString("token", authResponse.Token);
+            HttpContext.Session.SetString("username", authResponse.Username);
+            HttpContext.Session.SetString("role", authResponse.Role);
+
+            return RedirectToPage("/Chat");
+        }
+
+
+        public class LoginInput
+        {
+            [Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
+            public string Username { get; set; }
+
+            [Required(ErrorMessage = "Has³o jest wymagane")]
+            public string Password { get; set; }
+        }
     }
 }

@@ -36,6 +36,9 @@ public class ChangeRoleModel : PageModel
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
+        httpClient.DefaultRequestHeaders.Add("X-Request-Source", "Strona");
+        httpClient.DefaultRequestHeaders.Add("User-Agent", Request.Headers["User-Agent"].ToString());
+
         await httpClient.PutAsync(url, content);
 
         return RedirectToPage("/Manage");

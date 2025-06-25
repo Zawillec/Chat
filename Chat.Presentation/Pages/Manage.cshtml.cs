@@ -49,6 +49,8 @@ namespace Chat.Presentation.Pages
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            httpClient.DefaultRequestHeaders.Add("X-Request-Source", "Strona");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", Request.Headers["User-Agent"].ToString());
 
             var url = $"http://localhost:5000/api/users?id={id}";
             var response = await httpClient.DeleteAsync(url);
@@ -64,10 +66,13 @@ namespace Chat.Presentation.Pages
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            httpClient.DefaultRequestHeaders.Add("X-Request-Source", "Strona");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", Request.Headers["User-Agent"].ToString());
 
             var getUrl = $"http://localhost:5000/api/users";
-            var users = await httpClient.GetFromJsonAsync<List<UserResponse>>(getUrl);
-            var user = users?.FirstOrDefault(u => u.Id == id);
+            var getResponse = await httpClient.GetFromJsonAsync<List<UserResponse>>(getUrl);
+            var user = getResponse?.FirstOrDefault(u => u.Id == id);
+
             if (user == null)
                 return RedirectToPage();
 
@@ -87,5 +92,6 @@ namespace Chat.Presentation.Pages
 
             return RedirectToPage();
         }
+
     }
 }

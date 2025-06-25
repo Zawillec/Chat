@@ -3,66 +3,62 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
-[AllowAnonymous]
-public class RegisterModel : PageModel
+namespace Chat.Presentation.Pages
 {
-    [BindProperty]
-    public RegisterInput Input { get; set; } = new();
-
-    public void OnGet() { }
-
-    public async Task<IActionResult> OnPostAsync()
+    [AllowAnonymous]
+    public class RegisterModel : PageModel
     {
-        if (!ModelState.IsValid)
-            return Page();
+        [BindProperty]
+        public RegisterInput Input { get; set; } = new();
 
-        if (Input.Password != Input.ConfirmPassword)
+        public void OnGet() { }
+
+        public async Task<IActionResult> OnPostAsync()
         {
-            ModelState.AddModelError("Input.ConfirmPassword", "Has³a nie s¹ zgodne.");
-            return Page();
-        }
+            if (!ModelState.IsValid || Input.Password != Input.ConfirmPassword)
+                return Page();
 
-        var httpClient = new HttpClient();
-        var payload = new
-        {
-            username = Input.Username,
-            password = Input.Password,
-            role = "User"
-        };
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("X-Request-Source", "Strona");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", Request.Headers["User-Agent"].ToString());
 
-        var response = await httpClient.PostAsJsonAsync("http://localhost:5000/api/auth/register", payload);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorContent = await response.Content.ReadAsStringAsync();
-
-            if (errorContent.Contains("User already exists"))
+            var payload = new
             {
-                ModelState.AddModelError("Input.Username", "Taki u¿ytkownik ju¿ istnieje.");
-            }
-            else
+                username = Input.Username,
+                password = Input.Password,
+                role = "User"
+            };
+
+            var response = await httpClient.PostAsJsonAsync("http://localhost:5000/api/auth/register", payload);
+            if (!response.IsSuccessStatusCode)
             {
-                ModelState.AddModelError(string.Empty, "Rejestracja nie powiod³a siê.");
+                var error = await response.Content.ReadAsStringAsync();
+                if (error.Contains("User already exists"))
+                    ModelState.AddModelError("Input.Username", "Taki u¿ytkownik ju¿ istnieje.");
+                else
+                    ModelState.AddModelError(string.Empty, "Rejestracja nie powiod³a siê.");
+                return Page();
             }
 
-            return Page();
+            return RedirectToPage("/Index", new { registered = true });
         }
 
-        return RedirectToPage("/Index", new { registered = true });
-    }
 
-    public class RegisterInput
-    {
-        [Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
-        public string Username { get; set; }
+        public class RegisterInput
+        {
+            [Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
+            public string Username { get; set; }
 
-        [Required(ErrorMessage = "Has³o jest wymagane")]
-        public string Password { get; set; }
+            [Required(ErrorMessage = "Has³o jest wymagane")]
+            public string Password { get; set; }
 
-        [Required(ErrorMessage = "Powtórzenie has³a jest wymagane")]
-        [Display(Name = "Powtórz has³o")]
-        public string ConfirmPassword { get; set; }
+            [Required(ErrorMessage = "Potwierdzenie has³a jest wymagane")]
+            [Display(Name = "Powtórz has³o")]
+            public string ConfirmPassword { get; set; }
+        }
     }
 }

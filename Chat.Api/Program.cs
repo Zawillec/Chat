@@ -70,7 +70,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseRouting();
-
+app.UseMiddleware<HeaderLoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
